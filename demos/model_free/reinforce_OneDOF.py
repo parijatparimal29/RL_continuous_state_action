@@ -1,23 +1,37 @@
 # Implementing REINFORCE Algorithm
 # Author: Parijat Parimal
 
-import gym
+import os.path
+import sys
+#from numpy.lib.tests.test_format import dt1
+curdir = os.path.dirname(__file__)
+cdir = os.path.abspath(os.path.join(curdir,'../../srcpy/'))
+sys.path.append(cdir)
+
 import numpy as np
+from robot_env.one_dof_manipulator import OneDOFManipulator
+from model_free.cost_functions import *
+from model_free.actor import *
+from model_free.critic import *
+from model_free.features import *
+
 import matplotlib.pyplot as plt
 import copy 
 import statistics as stats
 
-#-todo- Need to import robot_env to replace gym
 
 epochs = 2000
 alpha = 0.0015
 gamma = 0.99
 
 # Initialize environment and weights
-env = gym.make('CartPole-v1') #-todo- Needs to change w.r.t. custom env
-nA = env.action_space.n #-todo- Needs to change w.r.t. custom env
+env = OneDOFManipulator(1, 0.1)
 np.random.seed(1)
-w = np.random.rand(4, 2)
+state = np.array([env.get_joint_position(), env.get_joint_velocity()])
+w = np.random.rand(np.shape(state))
+
+theta_init = 194*(np.pi/180)
+env.reset_manipulator(theta_init,0)
 
 # Policy to map state to action w.r.t. weights 'w'
 def policy(state,w):
@@ -43,17 +57,18 @@ for l in l_rate:
     alpha = l
     for e in range(epochs):
 
-        state = env.reset()[None,:] #-todo- Needs to change w.r.t. custom env
+        env.reset_manipulator(theta_init,0)
+        state = np.array([env.get_joint_position(), env.get_joint_velocity()])
         grads = []	
         rewards = []
         score = 0
         
         while True:
 
-            # Render Animation - Also needs to change w.r.t. custom env
+            # Render Animation
             #if (e%500==0):
-                #env.render()
-            #env.render()
+                #env.animate()
+            #env.animate()
 
             # Assign probabilities w.r.t. current state and weights
             probs = policy(state,w)
