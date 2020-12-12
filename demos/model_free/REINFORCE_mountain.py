@@ -9,15 +9,16 @@ import statistics as stats
 
 #-todo- Need to import robot_env to replace gym
 
-epochs = 2000
+epochs = 5000
 alpha = 0.0015
 gamma = 0.99
 
 # Initialize environment and weights
-env = gym.make('CartPole-v1') #-todo- Needs to change w.r.t. custom env
-nA = env.action_space.n #-todo- Needs to change w.r.t. custom env
+env = gym.make('MountainCar-v0') #-todo- Needs to change w.r.t. custom env
+nA = 3 #-todo- Needs to change w.r.t. custom env
+nS = 2
 np.random.seed(1)
-w = np.random.rand(4, 2)
+w = np.random.rand(nS,nA)
 
 # Policy to map state to action w.r.t. weights 'w'
 def policy(state,w):
@@ -30,8 +31,20 @@ def softmax_grad(softmax):
     s = softmax.reshape(-1,1)
     return np.diagflat(s) - np.dot(s, s.T)
 
+def get_reward(state):
+    if state[0] >= 0.5:
+        print("Car has reached the goal")
+        return 10
+    if state[0] < -0.5:
+        #print(state[0],(1+state[0])**2)
+        return (2+state[0])**2
+    if state[0] > -0.3:
+        #print(state[0],(1+state[0])**2)
+        return (2+state[0])**2
+    return 0
+
 # Incrementatl learning rates
-l_rate = [0.0002,0.0004,0.0006,0.0008]
+l_rate = [0.00025]
 mean_rewards = []
 mean_stddevs = []
 mean_variances = []
@@ -43,16 +56,16 @@ for l in l_rate:
     alpha = l
     for e in range(epochs):
 
-        state = env.reset()[None,:] #-todo- Needs to change w.r.t. custom env
+        state = env.reset()[None,:]
         grads = []	
         rewards = []
         score = 0
-        
+        #w = np.random.rand(nS,nA)
         while True:
 
             # Render Animation - Also needs to change w.r.t. custom env
-            #if (e%500==0):
-                #env.render()
+            if (e%999==0):
+                env.render()
             #env.render()
 
             # Assign probabilities w.r.t. current state and weights
@@ -60,9 +73,9 @@ for l in l_rate:
         
             # Choose action with non-uniform randomness w.r.t. probabilities of each action at current state
             action = np.random.choice(nA,p=probs[0])
-        
             # Get next state, reward and game status based on the action taken 
             next_state,reward,done,_ = env.step(action) #-todo- Needs to change w.r.t. custom env
+            reward = get_reward(next_state)
             next_state = next_state[None,:]
 
             # Compute gradient and store reward w.r.t. weight updates
@@ -110,6 +123,6 @@ print("Overall std deviation: ",stats.stdev(episode_rewards))
 print("Overall variance: ",stats.variance(episode_rewards)/(epochs*iter))
 plt.figure(figsize=(10, 5))    
 plt.plot(l_rate,mean_rewards)
-plt.plot(l_rate,mean_stddevs)
-plt.plot(l_rate,mean_variances)
+#plt.plot(l_rate,mean_stddevs)
+#plt.plot(l_rate,mean_variances)
 plt.show()
