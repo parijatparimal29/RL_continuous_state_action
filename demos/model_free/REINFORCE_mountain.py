@@ -9,12 +9,13 @@ import statistics as stats
 
 #-todo- Need to import robot_env to replace gym
 
-epochs = 5000
+epochs = 120
 alpha = 0.0015
 gamma = 0.99
 
 # Initialize environment and weights
 env = gym.make('MountainCar-v0') #-todo- Needs to change w.r.t. custom env
+env._max_episode_steps = 1000
 nA = 3 #-todo- Needs to change w.r.t. custom env
 nS = 2
 np.random.seed(1)
@@ -31,20 +32,24 @@ def softmax_grad(softmax):
     s = softmax.reshape(-1,1)
     return np.diagflat(s) - np.dot(s, s.T)
 
+def reward_test(state):
+    # Adjust reward based on car position
+    reward = state[0] + 0.5
+# Adjust reward for task completion
+    if state[0] >= 0.5:
+        reward += 1
+    return reward
+
 def get_reward(state):
     if state[0] >= 0.5:
         print("Car has reached the goal")
         return 10
-    if state[0] < -0.5:
-        #print(state[0],(1+state[0])**2)
-        return (2+state[0])**2
-    if state[0] > -0.3:
-        #print(state[0],(1+state[0])**2)
-        return (2+state[0])**2
+    if state[0] > -0.4:
+        return (1+state[0])**2
     return 0
 
 # Incrementatl learning rates
-l_rate = [0.00025]
+l_rate = [0.0025]
 mean_rewards = []
 mean_stddevs = []
 mean_variances = []
@@ -55,7 +60,7 @@ for l in l_rate:
     
     alpha = l
     for e in range(epochs):
-
+        max_h = -2.0
         state = env.reset()[None,:]
         grads = []	
         rewards = []
@@ -64,7 +69,7 @@ for l in l_rate:
         while True:
 
             # Render Animation - Also needs to change w.r.t. custom env
-            if (e%999==0):
+            if ( e>100):
                 env.render()
             #env.render()
 
@@ -75,7 +80,12 @@ for l in l_rate:
             action = np.random.choice(nA,p=probs[0])
             # Get next state, reward and game status based on the action taken 
             next_state,reward,done,_ = env.step(action) #-todo- Needs to change w.r.t. custom env
-            reward = get_reward(next_state)
+            if(next_state[0] >= 0.5):
+                print(next_state[0])
+                print("Car has reached the goal\n")
+                #env.render()
+            reward = reward_test(next_state)
+            max_h = max(max_h,next_state[0])
             next_state = next_state[None,:]
 
             # Compute gradient and store reward w.r.t. weight updates
@@ -102,7 +112,7 @@ for l in l_rate:
 
         # Print rewards per episode / epoch
         episode_rewards.append(score) 
-        print("Episode: " + str(e) + " Score: " + str(score), end="\r", flush=False)
+        print("Episode: " + str(e) + " Score: " + str(score) + " Max height: " + str(max_h), end="\r", flush=False)
 
     iter += 1
     # Plot graph of rewards per episode

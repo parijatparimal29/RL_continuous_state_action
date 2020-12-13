@@ -34,7 +34,7 @@ def get_reward(state):
     if (status > 0.):
         return (1+state[0])**2
     return 0
-
+        
 # Incrementatl learning rates
 l_rate = [0.0025]
 mean_rewards = []
@@ -42,7 +42,7 @@ mean_stddevs = []
 mean_variances = []
 episode_rewards = []
 iter = 0
-
+frames = []
 for l in l_rate:
     
     alpha = l
@@ -52,12 +52,12 @@ for l in l_rate:
         grads = []
         rewards = []
         score = 0
-        
+        frame = 0
         while True:
-
+            frame += 1
             # Render Animation - Also needs to change w.r.t. custom env
             if (e>1000 and e%100==0):
-                env.render('rgb_array')
+                env.render()
             #env.render()
 
             # Assign probabilities w.r.t. current state and weights
@@ -88,14 +88,17 @@ for l in l_rate:
             # Break when game is over
             if done:
                 break
-
+        
         # REINFORCE weight with rewards from current episode and future rewards as per policy
         for i in range(len(grads)):
             w += alpha * grads[i] * sum([ r * (gamma ** r) for t,r in enumerate(rewards[i:])])
 
         # Print rewards per episode / epoch
         episode_rewards.append(score) 
-        print("Episode: " + str(e) + " Score: " + str(score), end="\r", flush=False)
+        frames.append(frame)
+        print("Episode: " + str(e) + " Frames: " + str(frame) + " Score: " + str(score), end="\r", flush=False)
+        #if(frame <500):
+            #print("You win!!")
 
     iter += 1
     # Plot graph of rewards per episode
@@ -109,7 +112,7 @@ for l in l_rate:
     mean_variances.append(stats.variance(episode_rewards[epochs*(iter-1):])/epochs)
 env.close()
 
-plt.plot(np.arange(epochs*iter),episode_rewards)
+plt.plot(np.arange(epochs*iter),frames)
 plt.show()
 print("Overall mean reward: ",stats.mean(episode_rewards))
 print("Overall std deviation: ",stats.stdev(episode_rewards))
