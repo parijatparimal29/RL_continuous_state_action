@@ -32,21 +32,11 @@ def softmax_grad(softmax):
     s = softmax.reshape(-1,1)
     return np.diagflat(s) - np.dot(s, s.T)
 
-def reward_test(state):
-    # Adjust reward based on car position
+def get_reward(state):
     reward = state[0] + 0.5
-# Adjust reward for task completion
     if state[0] >= 0.5:
         reward += 1
     return reward
-
-def get_reward(state):
-    if state[0] >= 0.5:
-        print("Car has reached the goal")
-        return 10
-    if state[0] > -0.4:
-        return (1+state[0])**2
-    return 0
 
 # Incrementatl learning rates
 l_rate = [0.0025]
@@ -84,7 +74,7 @@ for l in l_rate:
                 print(next_state[0])
                 print("Car has reached the goal\n")
                 #env.render()
-            reward = reward_test(next_state)
+            reward = get_reward(next_state)
             max_h = max(max_h,next_state[0])
             next_state = next_state[None,:]
 

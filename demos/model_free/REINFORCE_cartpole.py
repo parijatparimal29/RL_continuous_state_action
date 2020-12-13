@@ -15,6 +15,7 @@ gamma = 0.99
 # Initialize environment and weights
 env = gym.make('CartPole-v1') #-todo- Needs to change w.r.t. custom env
 nA = env.action_space.n #-todo- Needs to change w.r.t. custom env
+env._max_episode_steps = 1000
 np.random.seed(1)
 w = np.random.rand(4, 2)
 
@@ -50,8 +51,8 @@ for l in l_rate:
         while True:
 
             # Render Animation - Also needs to change w.r.t. custom env
-            #if (e%500==0):
-                #env.render()
+            if (e%500==0):
+                env.render()
             #env.render()
 
             # Assign probabilities w.r.t. current state and weights
