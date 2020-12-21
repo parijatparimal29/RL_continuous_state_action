@@ -98,6 +98,17 @@ class DoubleIntegrator:
         # force applied on the block throughout the simulation 
         self.sim_data = np.array([[init_x], [init_xd], [0.0]])
         self.t = 0 # time step counter in mili seconds
+
+    def reset_state(self, new_theta, new_theta_dot):
+        '''
+        This function resets the manipulator to a new position
+        Input:
+            new_theta : new joint position
+            new_theta_dot : new joint velocity
+        '''
+        sim_data_t_1 = np.array([[new_theta], [new_theta_dot], [0.0]])
+        self.sim_data = np.concatenate((self.sim_data, sim_data_t_1), axis = 1)
+        self.t += 1
         
     def step_double_integrator(self, f_t):
         '''
@@ -117,6 +128,9 @@ class DoubleIntegrator:
         # incrementing time
         self.t += 1
         
+    def step(self, f_t):
+        return self.step_double_integrator(f_t)
+        
     def get_position(self):
         '''
         This function returns the location of the block at current time step
@@ -128,6 +142,12 @@ class DoubleIntegrator:
         This function returns the velocity of the block at current time step
         '''
         return self.sim_data[:,self.t][1]
+    
+    def get_state(self):
+        '''
+        This function returns the state of the block at current time step
+        '''
+        return self.sim_data[:,self.t][0:2]
     
     def animate(self, freq = 25):
         

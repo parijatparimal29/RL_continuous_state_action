@@ -8,14 +8,14 @@ import statistics as stats
 
 #-todo- Need to import robot_env to replace gym
 
-epochs = 2000
+epochs = 1000
 alpha = 0.0015
 gamma = 0.99
 
 # Initialize environment and weights
 env = gym.make('CartPole-v1') #-todo- Needs to change w.r.t. custom env
 nA = env.action_space.n #-todo- Needs to change w.r.t. custom env
-env._max_episode_steps = 1000
+#env._max_episode_steps = 200
 np.random.seed(1)
 w = np.random.rand(4, 2)
 
@@ -31,7 +31,7 @@ def softmax_grad(softmax):
     return np.diagflat(s) - np.dot(s, s.T)
 
 # Incrementatl learning rates
-l_rate = [0.0002,0.0004,0.0006,0.0008]
+l_rate = [0.0008]
 mean_rewards = []
 mean_stddevs = []
 mean_variances = []
@@ -51,7 +51,7 @@ for l in l_rate:
         while True:
 
             # Render Animation - Also needs to change w.r.t. custom env
-            if (e%500==0):
+            if (e >990):
                 env.render()
             #env.render()
 
@@ -103,6 +103,8 @@ for l in l_rate:
 env.close()
 
 plt.plot(np.arange(epochs*iter),episode_rewards)
+plt.xlabel("episodes")
+plt.ylabel("score")
 plt.show()
 print("Overall mean reward: ",stats.mean(episode_rewards))
 print("Overall std deviation: ",stats.stdev(episode_rewards))

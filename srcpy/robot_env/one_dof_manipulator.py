@@ -110,7 +110,7 @@ class OneDOFManipulator:
         '''
         A_lin = np.identity(2)
         A_lin[0,1] = dt
-        A_lin[1,0] = -np.round(self.m*self.g*np.cos(state[0])/self.I, 2)
+        A_lin[1,0] = -np.round(self.m*self.g*dt*np.cos(state[0])/self.I, 2)
 
         return A_lin
 
@@ -140,6 +140,17 @@ class OneDOFManipulator:
         
         self.sim_data = np.array([[initial_theta], [initial_theta_dot], [0.0]])
         self.t = 0 # time counter in milli seconds
+
+    def reset_state(self, new_theta, new_theta_dot):
+        '''
+        This function resets the manipulator to a new position
+        Input:
+            new_theta : new joint position
+            new_theta_dot : new joint velocity
+        '''
+        sim_data_t_1 = np.array([[new_theta], [new_theta_dot], [0.0]])
+        self.sim_data = np.concatenate((self.sim_data, sim_data_t_1), axis = 1)
+        self.t += 1
             
     def step_manipulator(self, torque, use_euler = True):
         '''
@@ -171,6 +182,9 @@ class OneDOFManipulator:
         # incrementing time
         self.t += 1
         
+    def step(self, torque, use_euler=True):
+        self.step_manipulator(torque, use_euler)
+        
     def get_joint_position(self):
         '''
         This function returns the current joint position (degrees) of the mainpulator
@@ -185,6 +199,9 @@ class OneDOFManipulator:
     
     def get_joint_state(self):
         return self.sim_data[:,self.t][0:2]
+    
+    def get_state(self):
+        return self.get_joint_state()
     
     def animate(self, freq = 100):
         

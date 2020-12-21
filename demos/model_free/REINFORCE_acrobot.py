@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import statistics as stats
 import math
 
-epochs = 3000
+epochs = 2000
 alpha = 0.0015
 gamma = 0.99
 
@@ -41,6 +41,7 @@ mean_rewards = []
 mean_stddevs = []
 mean_variances = []
 episode_rewards = []
+actual_rewards = []
 iter = 0
 frames = []
 for l in l_rate:
@@ -53,6 +54,8 @@ for l in l_rate:
         rewards = []
         score = 0
         frame = 0
+        act_score = 0
+        act_rewards = []
         while True:
             frame += 1
             # Render Animation - Also needs to change w.r.t. custom env
@@ -67,7 +70,8 @@ for l in l_rate:
             action = np.random.choice(nA,p=probs[0])
             # Get next state, reward and game status based on the action taken 
             next_state,reward,done,_ = env.step(action) #-todo- Needs to change w.r.t. custom env
-
+            act_rewards.append(reward)
+            act_score += reward
             reward += get_reward(next_state)
             next_state = next_state[None,:]
 
@@ -81,7 +85,6 @@ for l in l_rate:
         
             # Update score
             score+=reward
-
             # update current state
             state = next_state
         
@@ -95,15 +98,19 @@ for l in l_rate:
 
         # Print rewards per episode / epoch
         episode_rewards.append(score) 
-        frames.append(frame)
+        actual_rewards.append(act_score)
+        frames.append(-frame)
         print("Episode: " + str(e) + " Frames: " + str(frame) + " Score: " + str(score), end="\r", flush=False)
         #if(frame <500):
             #print("You win!!")
 
     iter += 1
     # Plot graph of rewards per episode
-    #plt.plot(np.arange(epochs),episode_rewards[epochs*(iter-1):])
-    #plt.show()
+    plt.plot(np.arange(epochs),episode_rewards[epochs*(iter-1):])
+    plt.show()
+    plt.figure()
+    plt.plot(np.arange(epochs),actual_rewards[epochs*(iter-1):])
+    plt.show()
     print("Mean reward: ",stats.mean(episode_rewards[epochs*(iter-1):]))
     mean_rewards.append(stats.mean(episode_rewards[epochs*(iter-1):]))
     print("Std Deviation: ",stats.stdev(episode_rewards[epochs*(iter-1):]))

@@ -41,6 +41,7 @@ class Cartpole:
         dy[2] = (1/(self.mc + self.mp*np.sin(theta)**2))*(actions + self.mp*np.sin(theta)*(self.lp*theta_d**2 + self.g*np.cos(theta)))
         dy[3] = (1/(self.lp*(self.mc + self.mp*np.sin(theta)**2)))*(-actions*np.cos(theta) - self.mp*self.lp*(theta_d**2)*0.5*np.sin(2*theta) - (self.mc + self.mp)*self.g*np.sin(theta))
 
+        # print(self.mc + self.mp*np.sin(theta)**2, theta)
         return dy
 
     def dynamics_state_derivative(self, x, theta, xd, theta_d, actions):
@@ -54,10 +55,19 @@ class Cartpole:
             action : force applied to the base
         '''
         # https://ocw.mit.edu/courses/electrical-engineering-and-computer-science/6-832-underactuated-robotics-spring-2009/readings/MIT6_832s09_read_ch03.pdf
-        A_x = np.zeros(4)
+        A_x = np.zeros((4,4))
         A_x[0,2] = 1.0
         A_x[1,3] = 1.0
-        # A_x[]
+
+        den = (self.mc + self.mp*np.sin(theta)**2)    
+        A_x[2,1] = (-self.mp*np.sin(2*theta)*(actions + self.mp*np.sin(theta)*(self.lp*theta_d**2 + self.g*np.cos(theta))))/den**2 \
+                    + (self.lp*self.mp*np.cos(theta)*theta_d**2 + self.mp*self.g*np.cos(2*theta))/den
+        
+        A_x[2,3] = 2*self.mp*self.lp*theta_d*np.sin(theta)/den
+
+        A_x[3,1] = (self.mp*np.sin(2*theta)*(actions*np.cos(theta) + 0.5*self.mp*self.lp*(theta_d**2)*np.sin(2*theta) + (self.mc + self.mp)*self.g*np.sin(theta)))/(self.lp*(den**2)) + \
+                    (actions*np.sin(theta) - self.mp*self.lp*np.cos(2*theta)*theta_d**2 - (self.mc + self.mp)*self.g*np.cos(theta))/(self.lp*den)
+        A_x[3,3] = (-self.mp*self.lp*theta_d*(np.sin(2*theta)))/(self.lp*den)
 
         return A_x
 
@@ -69,6 +79,7 @@ class Cartpole:
             states : the state matrix
             actions : torques
         '''
+    
         return np.add(state, self.dynamics(state[0], state[1], state[2], state[3], actions)*self.dt)
 
     def dynamics_x(self, state, actions, dt):
@@ -88,8 +99,9 @@ class Cartpole:
             actions : torques
         '''
         B_lin = np.zeros((4,1))
-        B_lin[2] = (1/(self.mc + self.mp*np.sin(theta)**2))
-        B_lin[3] = (1/(self.lp*(self.mc + self.mp*np.sin(theta)**2)))*(-np.cos(state[0]))
+        den = (self.mc + self.mp*np.sin(state[1])**2)
+        B_lin[2] = (dt/den)
+        B_lin[3] = (dt/(self.lp*den))*(-np.cos(state[1]))
 
         return B_lin
 
@@ -101,6 +113,16 @@ class Cartpole:
         '''
         self.sim_data = np.array([[init_x], [init_theta], [init_xd], [init_theta_d], [0.0]])
         self.t = 0 # time step counter in mili seconds
+
+    def reset_state(self, init_x, init_theta, init_xd, init_theta_d):
+        '''
+        This function resets the system to initial position without resetting history
+        Input:
+            new initial state
+        '''
+        sim_data_t_1 = np.array([[init_x], [init_theta], [init_xd], [init_theta_d], [0.0]])
+        self.sim_data = np.concatenate((self.sim_data, sim_data_t_1), axis = 1)
+        self.t += 1
 
     def step_cartpole(self, actions):
         '''
@@ -118,19 +140,28 @@ class Cartpole:
         self.sim_data[1] = np.sign(self.sim_data[1])*(abs(self.sim_data[1])%(2*np.pi))
         
         self.t += 1
+        
+    def step(self, actions):
+        self.step_cartpole(actions)
 
     def get_states(self):
         '''
         This function returns the state of the system at the current time step
         '''
-        return self.sim_data[:,self.t]
+        return self.sim_data[:,self.t][0:4]
+    
+    def get_state(self):
+        '''
+        This function returns the state of the block at current time step
+        '''
+        return self.get_states()
 
     def animate(self, freq = 25):
         
         sim_data = self.sim_data[:,::freq]
 
         fig = plt.figure()
-        ax = plt.axes(xlim=(-self.length - 5, self.length+ 5), ylim=(-self.length - 5, self.length + 5))
+        ax = plt.axes(xlim=(-self.length - 10, self.length+ 10), ylim=(-self.length - 10, self.length + 10))
         text_str = "Cartpole Animation"
         
         left, = ax.plot([], [], lw=4)
