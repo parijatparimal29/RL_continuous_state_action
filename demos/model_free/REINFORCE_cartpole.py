@@ -7,7 +7,6 @@ import matplotlib.pyplot as plt
 import statistics as stats
 
 # Hyperparameters
-
 epochs = 1000
 alpha = 0.0015
 gamma = 0.99
@@ -93,14 +92,15 @@ for l in l_rate:
 
     iter += 1
     # Plot graph of rewards per episode
-    #plt.plot(np.arange(epochs),episode_rewards[epochs*(iter-1):])
-    #plt.show()
+    plt.plot(np.arange(epochs),episode_rewards[epochs*(iter-1):])
+    plt.show()
     print("Mean reward: ",stats.mean(episode_rewards[epochs*(iter-1):]))
     mean_rewards.append(stats.mean(episode_rewards[epochs*(iter-1):]))
     print("Std Deviation: ",stats.stdev(episode_rewards[epochs*(iter-1):]))
     mean_stddevs.append(stats.stdev(episode_rewards[epochs*(iter-1):]))
     print("Variance: ",stats.variance(episode_rewards[epochs*(iter-1):])/epochs)
     mean_variances.append(stats.variance(episode_rewards[epochs*(iter-1):])/epochs)
+
 env.close()
 
 plt.plot(np.arange(epochs*iter),episode_rewards)
