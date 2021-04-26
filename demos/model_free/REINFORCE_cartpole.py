@@ -6,15 +6,15 @@ import numpy as np
 import matplotlib.pyplot as plt
 import statistics as stats
 
-#-todo- Need to import robot_env to replace gym
+# Hyperparameters
 
 epochs = 1000
 alpha = 0.0015
 gamma = 0.99
 
 # Initialize environment and weights
-env = gym.make('CartPole-v1') #-todo- Needs to change w.r.t. custom env
-nA = env.action_space.n #-todo- Needs to change w.r.t. custom env
+env = gym.make('CartPole-v1') 
+nA = env.action_space.n 
 #env._max_episode_steps = 200
 np.random.seed(1)
 w = np.random.rand(4, 2)
@@ -43,14 +43,14 @@ for l in l_rate:
     alpha = l
     for e in range(epochs):
 
-        state = env.reset()[None,:] #-todo- Needs to change w.r.t. custom env
+        state = env.reset()[None,:]
         grads = []	
         rewards = []
         score = 0
         
         while True:
 
-            # Render Animation - Also needs to change w.r.t. custom env
+            # Render Animation
             if (e >990):
                 env.render()
             #env.render()
@@ -60,8 +60,9 @@ for l in l_rate:
         
             # Choose action with non-uniform randomness w.r.t. probabilities of each action at current state
             action = np.random.choice(nA,p=probs[0])
+            
             # Get next state, reward and game status based on the action taken 
-            next_state,reward,done,_ = env.step(action) #-todo- Needs to change w.r.t. custom env
+            next_state,reward,done,_ = env.step(action) 
             next_state = next_state[None,:]
 
             # Compute gradient and store reward w.r.t. weight updates
